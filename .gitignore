@@ -5,3 +5,5 @@ venv/
 .cache/
 .spotify_cache
 *.log
+__pycache__/
+
