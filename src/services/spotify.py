@@ -17,6 +17,9 @@ class SpotifyService:
     def play(self) -> None:
         self.client.start_playback()
 
+    def pause(self) -> None:
+        self.client.pause_playback()
+
     def next_track(self) -> None:
         self.client.next_track()
 
