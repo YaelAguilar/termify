@@ -14,38 +14,6 @@ class TermifyApp:
                 self.draw()
                 self.handle_input()
 
-    def handle_input(self):
-        with t.cbreak():
-            while True:
-                key = t.inkey()
-                height = t.height
-
-                if key == 'q' or key == 'Q':
-                    break
-                elif key.name == 'KEY_RIGHT' or key == 'n':
-                    try:
-                        self.spotify.next_track()
-                    except Exception:
-                        pass
-                    self.draw()
-                elif key.name == 'KEY_LEFT' or key == 'p':
-                    try:
-                        self.spotify.previous_track()
-                    except Exception:
-                        pass
-                    self.draw()
-                elif key == ' ':
-                    try:
-                        state = self.spotify.get_playback_state()
-                        if state and state.get("is_playing"):
-                            self.spotify.pause()
-                        else:
-                            self.spotify.play()
-                    except Exception as e:
-                        print(t.move(height - 1, 0) + str(e))
-                        t.inkey(timeout=3)
-                    self.draw()
-
     def draw(self):
         print(t.clear())
         width = t.width
@@ -120,3 +88,73 @@ class TermifyApp:
         # Atajos
         hints = "[ SPACE: play/pause | <- prev | -> next | Q: salir ]"
         print(t.move(height - 2, width // 2 - len(hints) // 2) + hints)
+
+    def draw_controls(self):
+        height = t.height
+        width = t.width
+        state = self.spotify.get_playback_state()
+
+        is_playing = state and state.get("is_playing")
+        play_pause = "[||]" if is_playing else "[|>]"
+
+        supports_volume = state and state.get("device") and state["device"].get("supports_volume")
+        if supports_volume:
+            volume = state["device"]["volume_percent"]
+            filled = int(volume / 10)
+            vol_bar = "=" * filled + "-" * (10 - filled)
+            controls = f"[|<]    {play_pause}    [>|]        Vol: [{vol_bar}] {volume}%"
+        else:
+            controls = f"[|<]    {play_pause}    [>|]"
+
+        print(t.move(height - 3, 0) + " " * width)
+        print(t.move(height - 3, width // 2 - len(controls) // 2) + controls)
+
+    def handle_input(self):
+        with t.cbreak():
+            while True:
+                key = t.inkey()
+                height = t.height
+
+                if key == 'q' or key == 'Q':
+                    break
+                elif key.name == 'KEY_RIGHT' or key == 'n':
+                    try:
+                        self.spotify.next_track()
+                    except Exception:
+                        pass
+                    self.draw()
+                elif key.name == 'KEY_LEFT' or key == 'p':
+                    try:
+                        self.spotify.previous_track()
+                    except Exception:
+                        pass
+                    self.draw()
+                elif key == ' ':
+                    try:
+                        state = self.spotify.get_playback_state()
+                        if state and state.get("is_playing"):
+                            self.spotify.pause()
+                        else:
+                            self.spotify.play()
+                    except Exception as e:
+                        print(t.move(height - 1, 0) + str(e))
+                        t.inkey(timeout=3)
+                    self.draw()
+                elif key.name == 'KEY_UP':
+                    try:
+                        state = self.spotify.get_playback_state()
+                        if state and state.get("device") and state["device"].get("supports_volume"):
+                            current = state["device"]["volume_percent"]
+                            self.spotify.set_volume(min(100, current + 1))
+                    except Exception:
+                        pass
+                    self.draw_controls()
+                elif key.name == 'KEY_DOWN':
+                    try:
+                        state = self.spotify.get_playback_state()
+                        if state and state.get("device") and state["device"].get("supports_volume"):
+                            current = state["device"]["volume_percent"]
+                            self.spotify.set_volume(max(0, current - 1))
+                    except Exception:
+                        pass
+                    self.draw_controls()
