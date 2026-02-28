@@ -1,1 +1,7 @@
 venv/
+
+*.pyc
+*.pyo
+.cache/
+.spotify_cache
+*.log
