@@ -73,17 +73,19 @@ class TermifyApp:
         # Controles
         is_playing = state and state.get("is_playing")
         play_pause = "[||]" if is_playing else "[|>]"
-
+        
+        # Control de reproducción centrado
+        playback_controls = f"[|<]    {play_pause}    [>|]"
+        print(t.move(height - 3, width // 2 - len(playback_controls) // 2) + playback_controls)
+        
+        # Control de volumen alineado a la derecha
         supports_volume = state and state.get("device") and state["device"].get("supports_volume")
         if supports_volume:
             volume = state["device"]["volume_percent"]
             filled = int(volume / 10)
             vol_bar = "=" * filled + "-" * (10 - filled)
-            controls = f"[|<]    {play_pause}    [>|]        Vol: [{vol_bar}] {volume}%"
-        else:
-            controls = f"[|<]    {play_pause}    [>|]"
-
-        print(t.move(height - 3, width // 2 - len(controls) // 2) + controls)
+            volume_control = f"Vol: [{vol_bar}] {volume}%"
+            print(t.move(height - 3, width - len(volume_control) - 2) + volume_control)
 
         # Atajos
         hints = "[ SPACE: play/pause | <- prev | -> next | Q: salir ]"
@@ -96,7 +98,15 @@ class TermifyApp:
 
         is_playing = state and state.get("is_playing")
         play_pause = "[||]" if is_playing else "[|>]"
-
+        
+        # Limpiar la línea de controles
+        print(t.move(height - 3, 0) + " " * width)
+        
+        # Control de reproducción centrado
+        playback_controls = f"[|<]    {play_pause}    [>|]"
+        print(t.move(height - 3, width // 2 - len(playback_controls) // 2) + playback_controls)
+        
+        # Control de volumen alineado a la derecha
         supports_volume = state and state.get("device") and state["device"].get("supports_volume")
         if supports_volume:
             # Usar el volumen proporcionado si está disponible, sino obtenerlo del estado
@@ -106,12 +116,8 @@ class TermifyApp:
                 volume = state["device"]["volume_percent"]
             filled = int(volume / 10)
             vol_bar = "=" * filled + "-" * (10 - filled)
-            controls = f"[|<]    {play_pause}    [>|]        Vol: [{vol_bar}] {volume}%"
-        else:
-            controls = f"[|<]    {play_pause}    [>|]"
-
-        print(t.move(height - 3, 0) + " " * width)
-        print(t.move(height - 3, width // 2 - len(controls) // 2) + controls)
+            volume_control = f"Vol: [{vol_bar}] {volume}%"
+            print(t.move(height - 3, width - len(volume_control) - 2) + volume_control)
 
     def handle_input(self):
         with t.cbreak():
