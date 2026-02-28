@@ -19,8 +19,6 @@ RESET = "\033[0m"
 class ASCIIArtConverter:
     """Convierte imágenes a arte en terminal usando half-blocks con color RGB."""
     
-    # Ratio alto/ancho de un carácter de terminal (típicamente ~2.0)
-    # Cada carácter es aprox. el doble de alto que de ancho
     CHAR_RATIO = 2.0
     
     def __init__(self, cache_dir: str = ".cache/album_covers"):
@@ -58,20 +56,6 @@ class ASCIIArtConverter:
         return image
     
     def _resize_image(self, image: Image.Image, max_width: int, max_height: int) -> Image.Image:
-        """
-        Redimensiona manteniendo aspecto cuadrado visualmente.
-        
-        Corrige la distorsión causada por los caracteres de terminal que son
-        más altos que anchos. Con half-blocks, cada "pixel" mide:
-          - ancho: 1 char_width
-          - alto:  0.5 * char_height
-        Para que se vea cuadrado, el ancho en chars debe ser:
-          ancho = alto_lineas * CHAR_RATIO * (img_w / img_h)
-
-        Args:
-            max_width: ancho máximo en caracteres
-            max_height: alto máximo en líneas de terminal
-        """
         img_w, img_h = image.size
         aspect = img_w / img_h  # Ratio de la imagen original
         
@@ -97,10 +81,6 @@ class ASCIIArtConverter:
         return image.resize((new_w, new_h_pixels), Image.Resampling.LANCZOS)
     
     def _enhance_image(self, image: Image.Image) -> Image.Image:
-        """
-        Mejora la imagen después de redimensionar para compensar la pérdida
-        de detalle al escalar a tamaños tan pequeños.
-        """
         # Enfocar para recuperar bordes perdidos al escalar
         image = image.filter(ImageFilter.SHARPEN)
         
@@ -113,24 +93,6 @@ class ASCIIArtConverter:
         return image
     
     def convert(self, url: str, max_width: int, max_height: int) -> Optional[Tuple[int, List[str]]]:
-        """
-        Convierte una imagen a arte de terminal con color RGB usando half-blocks.
-        
-        Cada línea de terminal representa 2 filas de pixeles:
-        - El carácter ▀ (upper half block) con:
-          - Color de texto (foreground) = pixel superior
-          - Color de fondo (background) = pixel inferior
-        
-        Args:
-            url: URL de la imagen
-            max_width: ancho máximo en caracteres
-            max_height: alto máximo en líneas de terminal
-            
-        Returns:
-            Tupla (ancho_visual, líneas) o None si falla.
-            ancho_visual es el ancho real en caracteres (para centrar).
-            líneas es una lista de strings con secuencias ANSI de color.
-        """
         if not url:
             return None
         
