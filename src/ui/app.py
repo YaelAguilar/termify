@@ -89,7 +89,7 @@ class TermifyApp:
         hints = "[ SPACE: play/pause | <- prev | -> next | Q: salir ]"
         print(t.move(height - 2, width // 2 - len(hints) // 2) + hints)
 
-    def draw_controls(self):
+    def draw_controls(self, volume_override=None):
         height = t.height
         width = t.width
         state = self.spotify.get_playback_state()
@@ -99,7 +99,11 @@ class TermifyApp:
 
         supports_volume = state and state.get("device") and state["device"].get("supports_volume")
         if supports_volume:
-            volume = state["device"]["volume_percent"]
+            # Usar el volumen proporcionado si está disponible, sino obtenerlo del estado
+            if volume_override is not None:
+                volume = volume_override
+            else:
+                volume = state["device"]["volume_percent"]
             filled = int(volume / 10)
             vol_bar = "=" * filled + "-" * (10 - filled)
             controls = f"[|<]    {play_pause}    [>|]        Vol: [{vol_bar}] {volume}%"
@@ -145,16 +149,28 @@ class TermifyApp:
                         state = self.spotify.get_playback_state()
                         if state and state.get("device") and state["device"].get("supports_volume"):
                             current = state["device"]["volume_percent"]
-                            self.spotify.set_volume(min(100, current + 1))
+                            # No permitir subir si ya está en 100%
+                            if current >= 100:
+                                continue
+                            new_volume = min(100, current + 5)
+                            self.spotify.set_volume(new_volume)
+                            self.draw_controls(volume_override=new_volume)
+                        else:
+                            self.draw_controls()
                     except Exception:
                         pass
-                    self.draw_controls()
                 elif key.name == 'KEY_DOWN':
                     try:
                         state = self.spotify.get_playback_state()
                         if state and state.get("device") and state["device"].get("supports_volume"):
                             current = state["device"]["volume_percent"]
-                            self.spotify.set_volume(max(0, current - 1))
+                            # No permitir bajar si ya está en 0%
+                            if current <= 0:
+                                continue
+                            new_volume = max(0, current - 5)
+                            self.spotify.set_volume(new_volume)
+                            self.draw_controls(volume_override=new_volume)
+                        else:
+                            self.draw_controls()
                     except Exception:
                         pass
-                    self.draw_controls()
