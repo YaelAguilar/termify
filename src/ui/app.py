@@ -1,5 +1,6 @@
 from blessed import Terminal
 from services.spotify import SpotifyService
+from ui.ascii_art import ASCIIArtConverter
 
 t = Terminal()
 
@@ -7,6 +8,9 @@ t = Terminal()
 class TermifyApp:
     def __init__(self, spotify: SpotifyService):
         self.spotify = spotify
+        self.ascii_converter = ASCIIArtConverter()
+        self.current_album_url = None
+        self.cached_ascii_art = None
 
     def run(self):
         with t.fullscreen():
@@ -64,6 +68,40 @@ class TermifyApp:
 
             print(t.move(4, center_x) + f"{name} - {artist}")
             print(t.move(5, center_x) + f"Album: {album}")
+            
+            # Obtener URL de la portada del álbum
+            album_url = None
+            if track.get("album") and track["album"].get("images"):
+                images = track["album"]["images"]
+                if images and len(images) > 0:
+                    album_url = images[0].get("url")
+            
+            # Calcular espacio disponible para el ASCII art
+            ascii_start_row = 7
+            ascii_max_height = height - 4 - ascii_start_row - 1
+            ascii_max_width = center_width
+            
+            # Solo recalcular si cambió la URL del álbum
+            if album_url != self.current_album_url:
+                self.current_album_url = album_url
+                if album_url:
+                    self.cached_ascii_art = self.ascii_converter.convert(
+                        album_url, ascii_max_width, ascii_max_height
+                    )
+                else:
+                    self.cached_ascii_art = None
+            
+            # Mostrar portada si está disponible
+            if self.cached_ascii_art:
+                art_width, art_lines = self.cached_ascii_art
+                ascii_row = ascii_start_row
+                for line in art_lines:
+                    if ascii_row >= height - 4:
+                        break
+                    # Centrar usando el ancho visual real (sin contar escape codes)
+                    line_start = center_x + (center_width - art_width) // 2
+                    print(t.move(ascii_row, line_start) + line)
+                    ascii_row += 1
         else:
             print(t.move(4, center_x) + "No hay nada reproduciendose")
 
