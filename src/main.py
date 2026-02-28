@@ -1,9 +1,10 @@
 from auth import get_spotify_client
+from ui.app import TermifyApp
 
 def main():
     sp = get_spotify_client()
-    user = sp.current_user()
-    print(f"Conectado como: {user['display_name']}")
+    app = TermifyApp()
+    app.run()
 
 if __name__ == "__main__":
     main()
